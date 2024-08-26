@@ -1,0 +1,2 @@
+# Funsies
+For a class
