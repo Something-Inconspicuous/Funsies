@@ -16,6 +16,8 @@ public class UndoGame {
             | 'u' to undo.            |
             | 'h' or '?' to show help |
             ===========================""";
+    private static final int PLAYER_WON = 1;
+    private static final int CPU_WON = 2;
     private final int maxTake;
 
     private int n;
@@ -97,64 +99,106 @@ public class UndoGame {
      * @param in Where to read game input.
      */
     public void play(OutputStream out, InputStream in) {
-        final PrintStream _out;
-        if(out instanceof PrintStream)
-            _out = (PrintStream) out;
-        else
-            _out = new PrintStream(out);
+        if (out == null) {
+            throw new NullPointerException("Output cannot be null.");
+        }
+        if (in == null) {
+            throw new NullPointerException("Input cannot be null.");
+        }
+
+        final PrintStream _out = printify(out);
 
         final Scanner _in = new Scanner(in);
 
-        new Thread(() -> {
-            boolean doPlay = true;
-            _out.println(HELP_STRING);
-            while(doPlay) {
-                boolean couldTake = false;
-                do {
-                    final Move move = new Move(0, 0);
+        new Thread(() -> playInThread(_out, _in), "NimGame").start();
+    }
 
-                    _out.format("%s\nThere are %d items left. Take 1-%d: ", this, n, maxTake);
+    private void playInThread(PrintStream out, Scanner in) {
+        out.println(HELP_STRING);
+        boolean couldTake = false;
+        int winner = 0;
+        do {
+            final Move move = new Move(0, 0);
 
-                    String input;
-                    do {
-                        input = _in.nextLine().toLowerCase();
-                    } while (input.isEmpty());
+            out.format("There are %d items left. Take 1-%d: ", n, maxTake);
 
-                    final char ch = input.charAt(0);
+            final char ch = getValidInputChar(in);
 
-                    if (ch == 'h' || ch == '?') {
-                        _out.println(HELP_STRING);
-                        continue;
-                    }
-
-                    if (ch == 'u' && !moves.isEmpty()) {
-                        Move last = moves.pop();
-                        n += last.cpuTake;
-                        n += last.playerTake;
-                        continue;
-                    }
-
-                    if (ch == 'q') {
-                        doPlay = false;
-                        break;
-                    }
-
-                    final int take = ch - '0';
-
-                    couldTake = take(take);
-
-                    move.playerTake = take;
-
-                    // Only computer play if we could
-                    if (couldTake) {
-                        move.cpuTake = cpuTurn();
-                        _out.format("The computer takes %d.\n", move.cpuTake);
-
-                        moves.push(move);
-                    }
-                } while (!couldTake && !isGameOver());
+            if (ch == 'h' || ch == '?') {
+                out.println(HELP_STRING);
+                continue;
             }
-        }, "NimGame").start();
+
+            if (ch == 'u' && !moves.isEmpty()) {
+                undo();
+                continue;
+            }
+
+            if (ch == 'q') {
+                break;
+            }
+
+            final int take = ch - '0';
+
+            couldTake = take(take);
+
+            if(isGameOver()){
+                winner = PLAYER_WON;
+                break;
+            }
+
+            move.playerTake = take;
+
+            // Only computer play if we could
+            if (couldTake) {
+                move.cpuTake = cpuTurn();
+                out.format("The computer takes %d.\n", move.cpuTake);
+
+                moves.push(move);
+            }
+
+        } while (!couldTake || !isGameOver());
+        printVictoryMessage(out, winner);
+    }
+
+    private static void printVictoryMessage(PrintStream out, int winner) {
+        final String msg = victoryMessage(winner);
+        if (msg != null) {
+            out.println(msg);
+        }
+    }
+
+    private static String victoryMessage(int winner) {
+        return switch (winner) {
+            case PLAYER_WON -> "Player has won!";
+            case CPU_WON -> "CPU has won!";
+            default -> null;
+        };
+    }
+
+    private static PrintStream printify(OutputStream out) {
+        if(out instanceof PrintStream)
+            return (PrintStream) out;
+        else
+            return new PrintStream(out);
+    }
+
+    private static char getValidInputChar(Scanner _in) {
+        return getValidInput(_in).charAt(0);
+    }
+
+    private static String getValidInput(Scanner _in) {
+        String input;
+        do {
+            input = _in.nextLine().toLowerCase();
+        } while (input.isEmpty());
+        return input;
+    }
+
+    private void undo() {
+        Move last = moves.pop();
+        n += last.cpuTake;
+        n += last.playerTake;
     }
 
     @Override
