@@ -4,7 +4,9 @@
 
 package unit1;
 
+import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * A simple stack implementation using an array.
@@ -140,5 +142,22 @@ public class Stack<E> /* implements Queue<E> */ {
     public boolean contains(E e) {
         return search(e) != -1;
     }
-     
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Stack<?> stack = (Stack<?>) o;
+        return Objects.deepEquals(data, stack.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(data);
+    }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(data);
+    }
 }
