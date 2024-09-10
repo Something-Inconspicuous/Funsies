@@ -4,22 +4,14 @@
 
 package unit1;
 
-import java.util.Arrays;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * A simple stack implementation using an array.
- * <p>
- * This specific stack implementation is not very good; it is not thread safe, lacks
- * many operations standard of other java collections, and probably some other issues.
- * <p>
- * That being said, it is simple and meets the requirements of this assignment, and normally
- * I would grossly overengineer it. I didn't this time.
  * 
  * @param <E> The type of element to store in this stack.
  */
-public class Stack<E> /* implements Queue<E> */ {
+public class Stack<E> implements Iterable<E> /* implements Queue<E> */ {
     private Object[] data;
     private transient int size;
 
@@ -158,6 +150,33 @@ public class Stack<E> /* implements Queue<E> */ {
 
     @Override
     public String toString() {
-        return Arrays.toString(data);
+        if(isEmpty()) return "[]";
+
+        StringBuilder sb = new StringBuilder("[");
+        Iterator<E> it = iterator();
+        while (true) {
+            E e = it.next();
+            sb.append(e);
+
+            if(it.hasNext())
+                sb.append(", ");
+            else {
+                sb.append("]");
+                break;
+            }
+        }
+
+        return sb.toString();
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        return Spliterators.iterator(spliterator());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Spliterator<E> spliterator() {
+        return Arrays.spliterator((E[]) data, 0, size());
     }
 }
