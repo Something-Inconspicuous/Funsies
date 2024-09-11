@@ -1,6 +1,8 @@
 package unit1;
 
 import unit1.exceptions.LinterException;
+import unit1.exceptions.MissingClosureException;
+import unit1.exceptions.UnexpectedClosureException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,6 +16,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class Linter {
+    private static LinterException lex;
+
     private enum OpenClose {
         ANGLE("<", ">"),
         COMMENT("/*", "*/"),
@@ -134,6 +138,7 @@ public class Linter {
                     } else {
                         OpenClose closeOc = getByClose(group);
                         list.add(new OpenCloseToken(closeOc, false));
+
                     }
                 }
             });
@@ -191,6 +196,7 @@ public class Linter {
         }
 
         assureAllClosed(stack);
+        throwLex();
     }
 
     /**
@@ -211,6 +217,7 @@ public class Linter {
         }
 
         assureAllClosed(stack);
+        throwLex();
     }
 
     /**
@@ -227,6 +234,7 @@ public class Linter {
         }
 
         assureAllClosed(stack);
+        throwLex();
     }
 
     /**
@@ -250,12 +258,12 @@ public class Linter {
             stack.push(ocToken.openClose());
         } else {
             if(stack.isEmpty()) {
-                throw new LinterException(extraCloseMsg(lineNumber, ocToken));
+                extraClose(lineNumber, ocToken);
             }
             
             final OpenClose last = stack.pop();
             if (last != ocToken.openClose()) {
-                throw new LinterException(wrongCloseMsg(lineNumber, ocToken, last));
+                wrongClose(lineNumber, ocToken, last);
             }
         }
     }
@@ -263,19 +271,39 @@ public class Linter {
     private static void assureAllClosed(Stack<OpenClose> stack) {
         if(stack.isEmpty()) return;
 
+        ensureLex();
+
         StringBuilder neededClosures = new StringBuilder();
         while(!stack.isEmpty()) {
             neededClosures.append(stack.pop().close).append(" ");
         }
 
-        throw new LinterException("Expected closure " + neededClosures);
+        lex.also(new MissingClosureException("Expected " + neededClosures));
     }
 
-    private static String extraCloseMsg(int lineNumber, OpenCloseToken badOc) {
-        return "Unexpected " + badOc.openClose().close + " on line " + lineNumber;
+    private static void extraClose(int lineNumber, OpenCloseToken badOc) {
+        ensureLex();
+        lex.also(new UnexpectedClosureException(badOc.openClose().close, lineNumber));
     }
 
-    private static String wrongCloseMsg(int lineNumber, OpenCloseToken unexpected, OpenClose expected) {
-        return "Unexpected " + unexpected.openClose().close + " on line " + lineNumber + "; " + expected.close + " expected.";
+    private static void wrongClose(int lineNumber, OpenCloseToken unexpected, OpenClose expected) {
+        ensureLex();
+        lex.also(new UnexpectedClosureException(unexpected.openClose().close, expected.close, lineNumber));
+    }
+
+    private static void ensureLex() {
+        if (lex == null) {
+            lex = new LinterException();
+        }
+    }
+
+    private static void throwLex() {
+        // ignore lack of problems
+        if(lex == null) return;
+
+        // Let garbage collection take lex as needed.
+        LinterException temp = lex;
+        lex = null;
+        throw temp;
     }
 }
