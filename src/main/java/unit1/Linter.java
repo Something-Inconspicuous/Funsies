@@ -8,13 +8,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+/**
+ * A static linter for brackets of all types and java multiline comments.
+ */
 public class Linter {
     private static LinterException lex;
 
@@ -61,7 +61,7 @@ public class Linter {
             allClose = Pattern.compile(pattern);
         }
 
-        private OpenClose(String open, String close) {
+        OpenClose(String open, String close) {
             this.open = open;
             this.close = close;
         }
@@ -173,7 +173,17 @@ public class Linter {
     }
 
     /**
-     * Lint a stream of strings treated as individual lines.
+     * Lints a collection of lines. This method is identical to
+     * {@code lint(lines.stream())}.
+     *
+     * @param lines The collection of lines to lint.
+     */
+    public static void lint(Collection<? extends String> lines) {
+        lint(lines.stream());
+    }
+
+    /**
+     * Lints a stream of strings treated as individual lines.
      * Will terminate the stream.
      * <p>
      * If new line characters ({@code \n}) are present inside
@@ -182,10 +192,10 @@ public class Linter {
      *
      * @param lines A stream of lines of text to lint
      */
-    public static void lint(Stream<String> lines) {
+    public static void lint(Stream<? extends String> lines) {
         Stack<OpenClose> stack = new Stack<>();
 
-        Iterator<String> it = lines.iterator();
+        Iterator<? extends String> it = lines.iterator();
 
         int lineNumber = 0;
 
