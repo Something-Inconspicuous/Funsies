@@ -39,7 +39,9 @@ public class Linter {
             StringBuilder sb = new StringBuilder();
 
             for (OpenClose oc : values()) {
-                sb.append("(").append(Pattern.quote(oc.open)).append(")|");
+                sb.append("((?<!\\\\)") // lookbehind for backslash for escapes
+                    .append(Pattern.quote(oc.open))
+                    .append(")|");
             }
 
             // Ignore the last character, which will be a useless pipe '|'
@@ -53,7 +55,9 @@ public class Linter {
             StringBuilder sb = new StringBuilder();
 
             for (OpenClose oc : values()) {
-                sb.append("(").append(Pattern.quote(oc.close)).append(")|");
+                sb.append("((?<!\\\\)") // lookbehind for backslash for escapes
+                        .append(Pattern.quote(oc.close))
+                        .append(")|");
             }
 
             // Ignore the last character, which will be a useless pipe '|'
@@ -129,6 +133,7 @@ public class Linter {
             ArrayList<OpenCloseToken> list = new ArrayList<>();
 
             allPattern.matcher(input).results().forEachOrdered(matchResult -> {
+
                 final String group = matchResult.group();
                 if(group != null) {
                     OpenClose potentialOpenOc = getByOpen(group);
@@ -138,7 +143,6 @@ public class Linter {
                     } else {
                         OpenClose closeOc = getByClose(group);
                         list.add(new OpenCloseToken(closeOc, false));
-
                     }
                 }
             });
@@ -269,11 +273,11 @@ public class Linter {
         } else {
             if(stack.isEmpty()) {
                 extraClose(lineNumber, ocToken);
-            }
-            
-            final OpenClose last = stack.pop();
-            if (last != ocToken.openClose()) {
-                wrongClose(lineNumber, ocToken, last);
+            } else {
+                final OpenClose last = stack.pop();
+                if (last != ocToken.openClose()) {
+                    wrongClose(lineNumber, ocToken, last);
+                }
             }
         }
     }
