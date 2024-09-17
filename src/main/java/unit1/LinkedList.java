@@ -119,6 +119,14 @@ public class LinkedList<E> implements Iterable<E> {
 
     public E removeFirst() {
         if (first == null) throw new NoSuchElementException("LinkedList is empty");
+        if (last == first) {
+            E temp = first.get();
+            first = null;
+            last = null;
+            size = 0;
+            modCount++;
+            return temp;
+        }
 
         modCount++;
         size--;
@@ -133,6 +141,14 @@ public class LinkedList<E> implements Iterable<E> {
 
     public E removeLast() {
         if(last == null) throw new NoSuchElementException("LinkedList is empty");
+        if (last == first) {
+            E temp = first.get();
+            first = null;
+            last = null;
+            size = 0;
+            modCount++;
+            return temp;
+        }
 
         modCount++;
         size--;
