@@ -5,7 +5,7 @@ import java.util.Random;
 public class TimingChart {
 
     public static void main(String[] args) {
-        fillWithUtilRandom();
+        fillWithMathRandom();
     }
 
     private static void fillWithMathRandom() {
