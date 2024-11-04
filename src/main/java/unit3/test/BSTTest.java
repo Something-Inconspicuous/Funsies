@@ -11,6 +11,8 @@ public class BSTTest {
             bst.insert(last = (int)(Math.random() * 50) + 1);
         }
 
+        System.out.println(bst.size());
+
         System.out.println(bst.contains(last));
 
         System.out.println(bst.contains(99));

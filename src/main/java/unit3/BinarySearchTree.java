@@ -107,19 +107,4 @@ public class BinarySearchTree<E extends Comparable<E>> {
         if(node.left != null)
             append(node.left, sb);
     }
-
-    // public String viualize() {
-    //     StringBuilder sb = new StringBuilder();
-    // }
-
-    // private static <G extends Comparable<G>> void appendVisual(Node<G> node, StringBuilder sb) {
-    //     if(node.right != null){
-    //         append(node.right, sb);
-    //     }
-    //     if(node.left != null){
-    //         append(node.left, sb);
-    //     }
-    //     sb.append(node.value).append(" ");
-    // }
-
 }
