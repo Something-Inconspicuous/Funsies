@@ -14,7 +14,7 @@ import unit3.gofish.Card.Suit;
 public final class Deck52 extends AbstractQueue<Card> implements Deck {
     private Card[] cards;
     private int top = 0;
-    private final static int CAPACITY = 52;
+    private final static int CAPACITY = (Rank.values().length - 1) * Suit.values().length;
 
     private int modCount = 0;
 
@@ -198,10 +198,11 @@ public final class Deck52 extends AbstractQueue<Card> implements Deck {
 
     @Override
     public void refill() {
+        top = 0;
         Rank[] ranks = Rank.values();
         for(Suit suit : Suit.values()) {
-            // Skip low ace
-            for(int rankOrd = 1; rankOrd < ranks.length; rankOrd++) {
+            // Skip low ace and joker
+            for(int rankOrd = 1; rankOrd < ranks.length - 1; rankOrd++) {
                 Rank rank = ranks[rankOrd];
                 cards[top++] = new Card(rank, suit);
             }
