@@ -2,8 +2,8 @@ package unit3.gofish;
 
 import java.util.Deque;
 
-public interface Deck extends Deque<Card> {
-    default Card deal() {
+public interface Deck extends Deque<PlayingCard> {
+    default PlayingCard deal() {
         return pollLast();
     }
 

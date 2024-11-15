@@ -1,3 +1,3 @@
 package unit3.gofish;
 
-public record Request(Player player, Card.Rank rank) {}
+public record Request(Player player, PlayingCard.Rank rank) {}

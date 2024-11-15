@@ -10,14 +10,14 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 
-import unit3.gofish.Card.Rank;
+import unit3.gofish.PlayingCard.Rank;
 
 public class CPUPlayer implements Player {
-    private Collection<Card> hand;
-    private Collection<Card> books;
+    private Collection<PlayingCard> hand;
+    private Collection<PlayingCard> books;
     private Random rng;
 
-    public CPUPlayer(Collection<Card> handCollection, Collection<Card> booksCollection) {
+    public CPUPlayer(Collection<PlayingCard> handCollection, Collection<PlayingCard> booksCollection) {
         super();
         hand = handCollection;
         hand.clear();
@@ -37,15 +37,15 @@ public class CPUPlayer implements Player {
         while(others.get(j).equals(this)) {
             j = rng.nextInt(others.size());
         }
-        return new Request(others.get(j), hand.stream().skip(i).findFirst().get().rank);
+        return new Request(others.get(j), hand.stream().skip(i).findFirst().get().rank());
     }
 
     @Override
-    public void giveCards(Card... cards) {
+    public void giveCards(PlayingCard... cards) {
         Collections.addAll(hand, cards);
 
         for(Rank rank : Rank.values()) {
-            List<Card> found = hand.stream().filter(card -> card.rank == rank).toList();
+            List<PlayingCard> found = hand.stream().filter(card -> card.rank() == rank).toList();
             if(found.size() >= 4) {
                 hand.removeAll(found);
                 books.addAll(found);
@@ -54,8 +54,8 @@ public class CPUPlayer implements Player {
     }
 
     @Override
-    public List<Card> takeCards(Rank ofRank) {
-        List<Card> cards = hand.stream().filter(card -> card.rank == ofRank).toList();
+    public List<PlayingCard> takeCards(Rank ofRank) {
+        List<PlayingCard> cards = hand.stream().filter(card -> card.rank() == ofRank).toList();
         hand.removeAll(cards);
         return cards;
     }
@@ -67,7 +67,7 @@ public class CPUPlayer implements Player {
     }
 
     @Override
-    public List<Card> books() {
+    public List<PlayingCard> books() {
         return books.stream().toList();
     }
 }

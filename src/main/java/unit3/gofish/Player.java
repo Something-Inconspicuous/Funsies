@@ -5,11 +5,11 @@ import java.util.List;
 public interface Player {
     Request getRequest(List<? extends Player> others);
 
-    void giveCards(Card... cards);
+    void giveCards(PlayingCard... cards);
 
-    List<Card> takeCards(Card.Rank ofRank);
+    List<PlayingCard> takeCards(PlayingCard.Rank ofRank);
 
     void reset();
 
-    List<Card> books();
+    List<PlayingCard> books();
 }

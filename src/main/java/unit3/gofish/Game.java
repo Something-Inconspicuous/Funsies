@@ -35,12 +35,12 @@ public class Game {
             Player current = players.get(turn);
             Request ask = current.getRequest(players);
 
-            List<Card> take = ask != null ? ask.player().takeCards(ask.rank()) : null;
+            List<PlayingCard> take = ask != null ? ask.player().takeCards(ask.rank()) : null;
 
             if(take == null || take.size() == 0) {
                 current.giveCards(deck.deal()); // go fish
             } else {
-                current.giveCards(take.toArray(new Card[take.size()]));
+                current.giveCards(take.toArray(new PlayingCard[take.size()]));
             }
 
             if(++turn >= players.size()) {

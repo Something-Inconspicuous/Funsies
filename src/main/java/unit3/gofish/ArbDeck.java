@@ -11,26 +11,29 @@ import java.util.Spliterator;
 import unit3.gofish.PlayingCard.Rank;
 import unit3.gofish.PlayingCard.Suit;
 
-public final class Deck52 extends AbstractQueue<PlayingCard> implements Deck {
+public final class ArbDeck extends AbstractQueue<PlayingCard> implements Deck {
     private PlayingCard[] cards;
     private int top = 0;
-    private final static int CAPACITY = (Rank.values().length - 1) * Suit.values().length;
+    private int capacity;
+    private int numRanks;
 
     private int modCount = 0;
 
-    public Deck52() {
+    public ArbDeck(int numRanks) {
         super();
-        cards = new PlayingCard[CAPACITY];
+        this.numRanks = numRanks;
+        capacity = numRanks * Suit.values().length;
+        cards = new PlayingCard[capacity];
         refill();
     }
 
     @Override
     public boolean offerFirst(PlayingCard e) {
-        if(top >= CAPACITY) return false;
+        if(top >= capacity) return false;
 
         Objects.requireNonNull(e);
 
-        PlayingCard[] copy = new PlayingCard[CAPACITY];
+        PlayingCard[] copy = new PlayingCard[capacity];
         System.arraycopy(cards, 0, copy, 1, top++);
         cards = copy;
         cards[0] = e;
@@ -42,7 +45,7 @@ public final class Deck52 extends AbstractQueue<PlayingCard> implements Deck {
 
     @Override
     public boolean offerLast(PlayingCard e) {
-        if(top >= CAPACITY) return false;
+        if(top >= capacity) return false;
 
         Objects.requireNonNull(e);
 
@@ -55,7 +58,7 @@ public final class Deck52 extends AbstractQueue<PlayingCard> implements Deck {
     public PlayingCard pollFirst() {
         if(top <= 0) return null;
 
-        PlayingCard[] copy = new PlayingCard[CAPACITY];
+        PlayingCard[] copy = new PlayingCard[capacity];
         System.arraycopy(cards, 1, copy, 0, --top);
         PlayingCard ret = cards[0];
         cards = copy;
@@ -73,7 +76,7 @@ public final class Deck52 extends AbstractQueue<PlayingCard> implements Deck {
 
     @Override
     public PlayingCard peekFirst() {
-        if(top > CAPACITY) return null;
+        if(top > capacity) return null;
         modCount++;
         return cards[top - 1]; 
     }
@@ -89,7 +92,7 @@ public final class Deck52 extends AbstractQueue<PlayingCard> implements Deck {
     public boolean removeFirstOccurrence(Object o) {
         for(int i = 0; i < top; i++) {
             if(Objects.equals(cards[i], o)) {
-                PlayingCard[] copy = new PlayingCard[CAPACITY];
+                PlayingCard[] copy = new PlayingCard[capacity];
                 // Remove via copy
                 System.arraycopy(cards, 0, copy, 0, i);
                 System.arraycopy(cards, i, copy, i + 1, top - i);
@@ -106,7 +109,7 @@ public final class Deck52 extends AbstractQueue<PlayingCard> implements Deck {
     public boolean removeLastOccurrence(Object o) {
         for(int i = top; i >= 0; i--) {
             if(Objects.equals(cards[i], o)) {
-                PlayingCard[] copy = new PlayingCard[CAPACITY];
+                PlayingCard[] copy = new PlayingCard[capacity];
                 // Remove via copy
                 System.arraycopy(cards, 0, copy, 0, i);
                 System.arraycopy(cards, i + 1, copy, i, top - i);
@@ -201,8 +204,8 @@ public final class Deck52 extends AbstractQueue<PlayingCard> implements Deck {
         top = 0;
         Rank[] ranks = Rank.values();
         for(Suit suit : Suit.values()) {
-            // Skip low ace and joker
-            for(int rankOrd = 1; rankOrd <= 13; rankOrd++) {
+            // Skip low ace
+            for(int rankOrd = 1; rankOrd <= numRanks; rankOrd++) {
                 Rank rank = ranks[rankOrd];
                 cards[top++] = new PlayingCard(rank, suit);
             }
@@ -226,12 +229,12 @@ public final class Deck52 extends AbstractQueue<PlayingCard> implements Deck {
 
     @Override
     public void addFirst(PlayingCard e) {
-        if(!offerFirst(e)) throw new IllegalStateException("Cannot exceed " + CAPACITY + " cards.");
+        if(!offerFirst(e)) throw new IllegalStateException("Cannot exceed " + capacity + " cards.");
     }
 
     @Override
     public void addLast(PlayingCard e) {
-        if(!offerLast(e)) throw new IllegalStateException("Cannot exceed " + CAPACITY + " cards.");
+        if(!offerLast(e)) throw new IllegalStateException("Cannot exceed " + capacity + " cards.");
     }
 
     @Override
