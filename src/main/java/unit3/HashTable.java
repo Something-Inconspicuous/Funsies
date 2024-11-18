@@ -1,12 +1,14 @@
 package unit3;
 
-import java.lang.foreign.ValueLayout;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.TreeSet;
 
+/**
+ * Custom Hash Table
+ */
 public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key, Value>> {
     public static class Entry<_Key, _Value> {
         private _Key key;
@@ -69,7 +71,7 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
     }
 
     public boolean put(Key key, Value value) {
-        int hash = Objects.hashCode(key);
+        int hash = Math.abs(Objects.hashCode(key));
         int i = hash % data.length;
         Bucket<Key, Value> bucket = data[i];
 
@@ -92,8 +94,7 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
     }
 
     public void set(Key key, Value value) {
-        int hash = Objects.hashCode(key);
-        int i = hash % data.length;
+        int i = index(value);
         Bucket<Key, Value> bucket = data[i];
 
         if(bucket.removeIf(e -> Objects.equals(e.key, key))) {
@@ -104,7 +105,7 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
     }
 
     public Value get(Key e) {
-        int i = Objects.hashCode(e) % data.length;
+        int i = index(e);
 
         Bucket<Key, Value> bucket = data[i];
         if(bucket == null) return null;
@@ -131,7 +132,11 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
     }
 
     private int index(Entry<Key, Value> e) {
-        return e.keyHash() % data.length;
+        return Math.abs(e.keyHash()) % data.length;
+    }
+
+    private int index(Object obj) {
+        return Math.abs(Objects.hashCode(obj)) % data.length;
     }
 
     @SuppressWarnings("unchecked")
@@ -214,5 +219,45 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
 
     public int size() {
         return size;
+    }
+
+    public boolean contains(Key key) {
+        int i = index(key);
+
+        Bucket<Key, Value> bucket = data[i];
+        if(bucket == null) return false;
+
+        Entry<Key, Value> maybe = bucket.find(key);
+        if(maybe == null) return false;
+
+        return true;
+    }
+
+    public boolean containsValue(Value value) {
+        for (Entry<Key,Value> entry : this) {
+            if(Objects.equals(entry.getValue(), value))
+                return true;
+        }
+        return false;
+    }
+
+    public Key remove(Key key) {
+        int i = index(key);
+
+        Bucket<Key, Value> bucket = data[i];
+        if(bucket == null) return null;
+
+        Entry<Key, Value> maybe = bucket.find(key);
+        if(maybe == null) return null;
+
+        size--;
+        bucket.remove(maybe);
+
+        // Iterator doesn't play nice with empty buckets
+        if(bucket.isEmpty()) {
+            data[i] = null;
+        }
+
+        return maybe.getKey();
     }
 }
