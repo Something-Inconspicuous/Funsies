@@ -3,6 +3,7 @@ package unit3;
 import java.lang.foreign.ValueLayout;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.TreeSet;
 
@@ -28,6 +29,11 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
         public int keyHash() {
             return Objects.hashCode(key);
         }
+
+        @Override
+        public String toString() {
+            return "{" + key + " => " + value + "}";
+        }
     }
     private static class Bucket<_Key, _Value> extends TreeSet<Entry<_Key, _Value>> {
         public Bucket() {
@@ -49,6 +55,7 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
     private Bucket<Key, Value>[] data;
 
     private transient int size;
+    private transient int numBuckets;
 
     private static final int BUCKET_CAPACITY = 8;
 
@@ -66,15 +73,22 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
         int i = hash % data.length;
         Bucket<Key, Value> bucket = data[i];
 
-        if(bucket == null)
-            bucket = new Bucket<>();
+        if(bucket == null){
+            data[i] = new Bucket<>();
+            bucket = data[i];
+            numBuckets++;
+        }
         else if(bucket.size() >= BUCKET_CAPACITY){
             growAndRehash();
             i = hash % data.length;
             bucket = data[i];
         }
 
-        return bucket.add(new Entry<Key, Value>(key, value));
+        Entry<Key, Value> entry = new Entry<Key, Value>(key, value);
+        if(bucket.add(entry)) {
+            size++;
+            return true;
+        } else return false;
     }
 
     public void set(Key key, Value value) {
@@ -82,7 +96,11 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
         int i = hash % data.length;
         Bucket<Key, Value> bucket = data[i];
 
-        bucket.removeIf(e -> Objects.equals(e.key, key));
+        if(bucket.removeIf(e -> Objects.equals(e.key, key))) {
+            bucket.add(new Entry<Key, Value>(key, value));
+        } else {
+            put(key, value);
+        }
     }
 
     public Value get(Key e) {
@@ -105,6 +123,7 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
                 int i = index(e);
                 if(data[i] == null) {
                     data[i] = new Bucket<>();
+                    numBuckets++;
                 }
                 data[i].add(e);
             }
@@ -118,11 +137,82 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
     @SuppressWarnings("unchecked")
     private void makeData(int length) {
         data = new Bucket[length];
+        numBuckets = 0;
     }
 
     @Override
     public Iterator<Entry<Key, Value>> iterator() {
-        // TODO Auto-generated method stub
-        return null;
+        return new Iterator<Entry<Key,Value>>() {
+            int i = 0;
+            int numBucketsTraversed = 0;
+            Iterator<Entry<Key, Value>> bucketIterator = initIterator();
+
+            private Iterator<Entry<Key, Value>> initIterator() {
+                Iterator<Entry<Key, Value>> it = data[i = findNextBucket()].iterator();
+                i = findNextBucket(i + 1);
+                return it;
+            }
+
+            @Override
+            public boolean hasNext() {
+                return bucketIterator != null && (bucketIterator.hasNext() || i != -1);
+            }
+
+            @Override
+            public Entry<Key, Value> next() {
+                if(bucketIterator.hasNext()) return bucketIterator.next();
+                numBucketsTraversed++;
+                Bucket<Key, Value> bucket = data[i];
+                i = findNextBucket(i + 1);
+                if(bucket == null) {
+                    throw new NoSuchElementException("No more elements in HashTable.");
+                }
+                bucketIterator = bucket.iterator();
+                return bucketIterator.next();
+            }
+        };
+    }
+
+    private int findNextBucket(int from, int till) {
+        for (int i = from; i < till; i++) {
+            // System.out.println("bucket " + i + " = " + data[i]);
+            if(data[i] != null) return i;
+        }
+        return -1;
+    }
+    private int findNextBucket() {
+        return findNextBucket(0, data.length);
+    }
+
+    private int findNextBucket(int from) {
+        return findNextBucket(from, data.length);
+    }
+
+    @Override
+    public String toString() {
+        if(isEmpty()) return "[]";
+
+        Iterator<Entry<Key, Value>> it = iterator();
+        StringBuilder sb = new StringBuilder("[");
+        while (true) {
+            sb.append(it.next());
+                
+            if(it.hasNext()) {
+                sb.append(", ");
+            } else {
+                sb.append("]");
+                break;
+            }
+        }
+
+        return sb.toString();
+    }
+    
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    public int size() {
+        return size;
     }
 }

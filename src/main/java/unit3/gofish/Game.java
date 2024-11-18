@@ -2,6 +2,9 @@ package unit3.gofish;
 
 import java.util.List;
 
+import unit3.gofish.Deck;
+import unit3.gofish.PlayingCard;
+
 public class Game {
     private List<? extends Player> players;
     private Deck deck;
