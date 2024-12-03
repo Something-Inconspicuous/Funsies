@@ -2,6 +2,8 @@ package unit3.gofish;
 
 import java.util.List;
 
+import unit3.gofish.cards.PlayingCard;
+
 public interface Player {
     Request getRequest(List<? extends Player> others);
 

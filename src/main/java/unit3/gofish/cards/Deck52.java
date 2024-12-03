@@ -1,4 +1,4 @@
-package unit3.gofish;
+package unit3.gofish.cards;
 
 import java.util.AbstractQueue;
 import java.util.Arrays;
@@ -8,8 +8,9 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Spliterator;
-import unit3.gofish.PlayingCard.Rank;
-import unit3.gofish.PlayingCard.Suit;
+
+import unit3.gofish.cards.PlayingCard.Rank;
+import unit3.gofish.cards.PlayingCard.Suit;
 
 public final class Deck52 extends AbstractQueue<PlayingCard> implements Deck {
     private PlayingCard[] cards;

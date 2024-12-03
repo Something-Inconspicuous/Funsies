@@ -1,8 +1,10 @@
-package unit3.gofish;
+package unit3.gofish.cards;
 
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.IntSupplier;
+
+import unit3.gofish.Card;
 
 /**
  * A French suited English playing card of the standerd 52-card deck. 

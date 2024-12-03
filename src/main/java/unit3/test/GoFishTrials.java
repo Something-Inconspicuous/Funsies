@@ -7,11 +7,10 @@ import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import unit3.gofish.ArbDeck;
 import unit3.gofish.CPUPlayer;
 import unit3.gofish.Game;
 import unit3.gofish.Player;
-import unit3.gofish.PlayingCard;
+import unit3.gofish.cards.PlayingCard;
 
 public class GoFishTrials {
     public static void main(String[] args) {

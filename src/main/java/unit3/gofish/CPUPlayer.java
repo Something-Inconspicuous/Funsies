@@ -10,7 +10,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicReference;
 
-import unit3.gofish.PlayingCard.Rank;
+import unit3.gofish.cards.PlayingCard;
+import unit3.gofish.cards.PlayingCard.Rank;
 
 public class CPUPlayer implements Player {
     private Collection<PlayingCard> hand;

@@ -1,7 +1,7 @@
 package unit3.gofish;
 
-import unit3.gofish.PlayingCard.Rank;
-import unit3.gofish.PlayingCard.Suit;
+import unit3.gofish.cards.PlayingCard.Rank;
+import unit3.gofish.cards.PlayingCard.Suit;
 
 public interface Card extends Comparable<Card> {
 
