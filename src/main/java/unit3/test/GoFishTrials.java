@@ -43,9 +43,9 @@ public class GoFishTrials {
         Player p1 = new CPUPlayer(generator.get(), generator.get());
         Player p2 = new CPUPlayer(generator.get(), generator.get());
         int shutouts = 0;
-        Game game = new Game(List.of(p1, p2), new ArbDeck(numRanks));
+//        Game game = new Game(List.of(p1, p2), new ArbDeck(numRanks));
         for(int i = 0; i < numTrials; i++) {
-            game.play();
+//            game.play();
 
             // System.out.printf("p1: %2d books | p2: %2d books\n", p1.books().size() / 4, p2.books().size() / 4);
             if(p1.books().isEmpty() || p2.books().isEmpty()) {
@@ -72,10 +72,10 @@ public class GoFishTrials {
                 public void run() {
                     final Player p1 = new CPUPlayer(generator.get(), generator.get());
                     final Player p2 = new CPUPlayer(generator.get(), generator.get());
-                    final Game game = new Game(List.of(p1, p2), new ArbDeck(numRanks));
+//                    final Game game = new Game(List.of(p1, p2), new ArbDeck(numRanks));
                     int _shutouts = 0;
                     for(int i = 0; i < perThread; i++) {
-                        game.play();
+//                        game.play();
     
                         if(p1.books().isEmpty() || p2.books().isEmpty()) {
                             // shutout

@@ -7,7 +7,7 @@ public interface Deck extends Deque<PlayingCard> {
         return pollLast();
     }
 
-    default Card slip() {
+    default PlayingCard slip() {
         return pollFirst();
     }
 

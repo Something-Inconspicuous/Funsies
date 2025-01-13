@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Spliterator;
 
-import unit3.gofish.cards.PlayingCard.RankImpl;
+import unit3.gofish.cards.PlayingCard.Rank;
 import unit3.gofish.cards.PlayingCard.Suit;
 
 public final class ArbDeck extends AbstractQueue<PlayingCard> implements Deck {
@@ -80,7 +80,7 @@ public final class ArbDeck extends AbstractQueue<PlayingCard> implements Deck {
     public PlayingCard peekFirst() {
         if(top > capacity) return null;
         modCount++;
-        return cards[top - 1]; 
+        return cards[top - 1];
     }
 
     @Override
@@ -142,7 +142,7 @@ public final class ArbDeck extends AbstractQueue<PlayingCard> implements Deck {
 
     @Override
     public void push(PlayingCard e) {
-        addFirst(e); // 
+        addFirst(e); //
     }
 
     @Override
@@ -204,11 +204,11 @@ public final class ArbDeck extends AbstractQueue<PlayingCard> implements Deck {
     @Override
     public void refill() {
         top = 0;
-        RankImpl[] ranks = RankImpl.values();
+        Rank[] ranks = Rank.values();
         for(Suit suit : Suit.values()) {
             // Skip low ace
             for(int rankOrd = 1; rankOrd <= numRanks; rankOrd++) {
-                RankImpl rank = ranks[rankOrd];
+                Rank rank = ranks[rankOrd];
                 cards[top++] = new PlayingCard(rank, suit);
             }
         }
