@@ -1,5 +1,7 @@
 package unit5;
 
+import unit2.Time;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -74,6 +76,14 @@ public class MedianPixel {
         return getMedianColorFromBuffered(toBufferedImage(image), sorter);
     }
 
+    public static Color getMedianColor(Image[] images, ByteSorter sorter) {
+        BufferedImage[] bimages = new BufferedImage[images.length];
+        for(int i = 0; i < images.length; i++) {
+            bimages[i] = toBufferedImage(images[i]);
+        }
+        return getMedianColorFromBuffered(bimages, sorter);
+    }
+
     private static Color getMedianColorFromBuffered(BufferedImage image, ByteSorter sorter) {
         byte[] pixels = getPixelBytes(image);
         boolean hasAlpha = image.getAlphaRaster() != null;
@@ -97,16 +107,93 @@ public class MedianPixel {
         }
     }
 
+    private static Color getMedianColorFromBuffered(BufferedImage[] images, ByteSorter sorter) {
+        byte[] rs = new byte[images.length];
+        byte[] gs = new byte[images.length];
+        byte[] bs = new byte[images.length];
+        byte[] as = new byte[images.length];
+        for (int i = 0; i < images.length; i++) {
+            byte[] pixels = getPixelBytes(images[i]);
+            boolean hasAlpha = images[i].getAlphaRaster() != null;
+    
+            byte[][] streams = zipperSplit(pixels, hasAlpha ? 4 : 3);
+    //        System.out.println(Arrays.deepToString(streams));
+    
+            for (byte[] channel : streams) {
+                sorter.sort(channel);
+            }
+    
+            rs[i] = streams[0][streams[0].length / 2];
+            gs[i] = streams[1][streams[1].length / 2];
+            bs[i] = streams[2][streams[2].length / 2];
+            
+            if(hasAlpha) {
+                as[i] = streams[3][streams[3].length / 2];
+            } else {
+                as[i] = -1; // 255 in unsigned
+            }
+        }
+
+        sorter.sort(rs);
+        sorter.sort(gs);
+        sorter.sort(bs);
+        sorter.sort(as);
+
+        int r = Byte.toUnsignedInt(rs[rs.length / 2]);
+        int g = Byte.toUnsignedInt(gs[gs.length / 2]);
+        int b = Byte.toUnsignedInt(bs[bs.length / 2]);
+        int a = Byte.toUnsignedInt(as[as.length / 2]);
+
+        return new Color(r, g, b, a);
+
+    }
+
     private static byte[] getPixelBytes(BufferedImage image) {
         return ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
     }
 
     public static void main(String[] args) throws IOException {
-        BufferedImage image = ImageIO.read(new File("test flower.jpg"));
-        Color col = getMedianColor(image, Arrays::sort);
-        Color col2 = getAverageColor(image);
-        System.out.println(col);
-        System.out.println(col2);
+        BufferedImage flower = ImageIO.read(new File("test flower.jpg"));
+        BufferedImage chichen = ImageIO.read(new File("Chichen_Itza_Raymond_Ostertag.JPG"));
+        timeDifferentSortingAlgorithms(flower, chichen);
+    }
+
+    public static void timeDifferentSortingAlgorithms(Image... testImages) {
+        if(testImages.length == 1) {
+            timeDifferentSortingAlgorithms1(testImages[0]);
+        } else {
+            testSorting(testImages, Arrays::sort,                    "Arrays.sort");
+            testSorting(testImages, Arrays::parallelSort,            "Arrays.parallelSort");
+            testSorting(testImages, MedianPixel::topDownMergeSort,   "Merge Sort, Top-down");
+            testSorting(testImages, MedianPixel::radixSort,          "Radix Sort");
+        }
+    }
+
+    public static void timeDifferentSortingAlgorithms1(Image testImage) {
+        testSorting(testImage, Arrays::sort,                    "Arrays.sort");
+        testSorting(testImage, Arrays::parallelSort,            "Arrays.parallelSort");
+        testSorting(testImage, MedianPixel::topDownMergeSort,   "Merge Sort, Top-down");
+        testSorting(testImage, MedianPixel::radixSort,          "Radix Sort");
+    }
+
+    private static void testSorting(Image image, ByteSorter sorter, String name) {
+        final Color[] col = new Color[1];
+        final long millis = Time.millis(() -> col[0] = getMedianColor(image, sorter));
+        System.out.println("=========================================");
+        System.out.println("Sorting Algorithm: " + name);
+        System.out.println("Time: " + millis + "ms");
+        System.out.println("Color: " + col[0]);
+        System.out.println("=========================================");
+    }
+
+    private static void testSorting(Image[] image, ByteSorter sorter, String name) {
+        final Color[] col = new Color[1];
+        final long millis = Time.millis(() -> col[0] = getMedianColor(image, sorter));
+        System.out.println("=========================================");
+        System.out.println("Sorting Algorithm: " + name);
+        System.out.println("Time: " + millis + "ms");
+        System.out.println("Color: " + col[0]);
+        System.out.println("=========================================");
     }
 
     private static byte[][] zipperSplit(byte[] array, int numSplitInto) {
@@ -145,5 +232,108 @@ public class MedianPixel {
         }
 
         return ret;
+    }
+
+    // Sorting algorithms
+
+    // ==========================
+    // Merge Sort, Top-down
+    // Source: https://en.wikipedia.org/wiki/Merge_sort
+    // Time:  O(n * log(n))
+    // Space: O(n)
+    // ===========================
+
+    // Array A[] has the items to sort; array B[] is a work array.
+    public static void topDownMergeSort(byte[] A) {
+        int n = A.length;
+        byte[] B = new byte[n];
+        System.arraycopy(A, 0, B, 0, n); // one time copy of A[] to B[]
+        topDownSplitMerge(A, 0, n, B);           // sort data from B[] into A[]
+    }
+
+    // Split A[] into 2 runs, sort both runs into B[], merge both runs from B[] to A[]
+    // iBegin is inclusive; iEnd is exclusive (A[iEnd] is not in the set).
+    private static void topDownSplitMerge(byte[] B, int iBegin, int iEnd, byte[] A) {
+        if (iEnd - iBegin <= 1)                     // if run size == 1
+            return;                                 //   consider it sorted
+        // split the run longer than 1 item into halves
+        int iMiddle = (iEnd + iBegin) / 2;              // iMiddle = mid point
+        // recursively sort both runs from array A[] into B[]
+        topDownSplitMerge(A, iBegin,  iMiddle, B);  // sort the left  run
+        topDownSplitMerge(A, iMiddle,    iEnd, B);  // sort the right run
+        // merge the resulting runs from array B[] into A[]
+        topDownMerge(B, iBegin, iMiddle, iEnd, A);
+    }
+
+    //  Left source half is A[ iBegin:iMiddle-1].
+    // Right source half is A[iMiddle:iEnd-1   ].
+    // Result is            B[ iBegin:iEnd-1   ].
+    private static void topDownMerge(byte[] B, int iBegin, int iMiddle, int iEnd, byte[] A)  {
+        int i = iBegin, j = iMiddle;
+
+        // While there are elements in the left or right runs...
+        for (int k = iBegin; k < iEnd; k++) {
+            // If left run head exists and is <= existing right run head.
+            if (i < iMiddle && (j >= iEnd || A[i] <= A[j])) {
+                B[k] = A[i];
+                i = i + 1;
+            } else {
+                B[k] = A[j];
+                j = j + 1;
+            }
+        }
+    }
+
+    // A utility function to get maximum value in arr[]
+    private static int getMax(byte arr[], int n) {
+        int mx = arr[0];
+        for (int i = 1; i < n; i++)
+            if (Byte.toUnsignedInt(arr[i]) > mx)
+                mx = Byte.toUnsignedInt(arr[i]);
+        return mx;
+    }
+
+    // A function to do counting sort of arr[] according to
+    // the digit represented by exp.
+    private static void countSort(byte[] arr, int n, int exp) {
+        byte output[] = new byte[n]; // output array
+        int i;
+        int count[] = new int[10];
+        Arrays.fill(count, 0);
+
+        // Store count of occurrences in count[]
+        for (i = 0; i < n; i++)
+            count[ (Byte.toUnsignedInt(arr[i])/exp) % 10 ]++;
+
+        // Change count[i] so that count[i] now contains
+        // actual position of this digit in output[]
+        for (i = 1; i < 10; i++)
+            count[i] += count[i - 1];
+
+        // Build the output array
+        for (i = n - 1; i >= 0; i--)
+        {
+            output[count[ (Byte.toUnsignedInt(arr[i])/exp)%10 ] - 1] = arr[i];
+            count[ (Byte.toUnsignedInt(arr[i])/exp)%10 ]--;
+        }
+
+        // Copy the output array to arr[], so that arr[] now
+        // contains sorted numbers according to current digit
+        for (i = 0; i < n; i++)
+            arr[i] = output[i];
+    }
+
+    // The main function to that sorts arr[] of size n using
+    // Radix Sort
+    public static void radixSort(byte[] arr) {
+        int n = arr.length;
+        // Find the maximum number to know number of digits
+        int m = getMax(arr, n);
+
+        // Do counting sort for every digit. Note that instead
+        // of passing digit number, exp is passed. exp is 10^i
+        // where i is current digit number
+        for (int exp = 1; m/exp > 0; exp *= 10)
+            countSort(arr, n, exp);
     }
 }
