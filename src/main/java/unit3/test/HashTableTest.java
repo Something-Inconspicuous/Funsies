@@ -10,15 +10,13 @@ public class HashTableTest {
         Random rng = new Random();
         HashTable<String, String> table = new HashTable<>();
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 160; i++) {
             table.put(randomString(rng), randomString(rng));
         }
 
         System.out.println(table);
 
-        table.forEach(e -> {
-            System.out.println(e);
-        });
+        table.forEach(System.out::println);
     }
 
     private static String randomString(Random rng) {

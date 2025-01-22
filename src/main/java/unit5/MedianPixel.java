@@ -3,9 +3,11 @@ package unit5;
 import unit2.Time;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.awt.image.ImageObserver;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -68,8 +70,13 @@ public class MedianPixel {
         void sort(byte[] bytes);
     }
 
+    @FunctionalInterface
+    public interface IntSorter {
+        void sort(int[] ints);
+    }
+
     public static Color getMedianColor(Image image) {
-        return getMedianColor(image, Arrays::sort);
+        return getMedianColor(image, (IntSorter) Arrays::sort);
     }
 
     public static Color getMedianColor(Image image, ByteSorter sorter) {
@@ -77,6 +84,17 @@ public class MedianPixel {
     }
 
     public static Color getMedianColor(Image[] images, ByteSorter sorter) {
+        BufferedImage[] bimages = new BufferedImage[images.length];
+        for(int i = 0; i < images.length; i++) {
+            bimages[i] = toBufferedImage(images[i]);
+        }
+        return getMedianColorFromBuffered(bimages, sorter);
+    }
+    public static Color getMedianColor(Image image, IntSorter sorter) {
+        return getMedianColorFromBuffered(toBufferedImage(image), sorter);
+    }
+
+    public static Color getMedianColor(Image[] images, IntSorter sorter) {
         BufferedImage[] bimages = new BufferedImage[images.length];
         for(int i = 0; i < images.length; i++) {
             bimages[i] = toBufferedImage(images[i]);
@@ -148,6 +166,59 @@ public class MedianPixel {
 
     }
 
+    private static Color getMedianColorFromBuffered(BufferedImage[] images, IntSorter sorter) {
+        int[] rs = new int[images.length];
+        int[] gs = new int[images.length];
+        int[] bs = new int[images.length];
+        for (int i = 0; i < images.length; i++) {
+            int[][] streams = getRGBs(images[i]);
+            for(int[] channel : streams) {
+                sorter.sort(channel);
+            }
+
+            rs[i] = streams[0][streams[0].length / 2];
+            gs[i] = streams[1][streams[1].length / 2];
+            bs[i] = streams[2][streams[2].length / 2];
+        }
+
+        sorter.sort(rs);
+        sorter.sort(gs);
+        sorter.sort(bs);
+
+        int r = rs[rs.length / 2];
+        int g = gs[gs.length / 2];
+        int b = bs[bs.length / 2];
+
+        return new Color(r, g, b);
+    }
+
+    private static Color getMedianColorFromBuffered(BufferedImage image, IntSorter sorter) {
+        int[][] streams = getRGBs(image);
+        for(int[] channel : streams) {
+            sorter.sort(channel);
+        }
+
+        int r = streams[0][streams[0].length / 2];
+        int g = streams[1][streams[1].length / 2];
+        int b = streams[2][streams[2].length / 2];
+
+        return new Color(r, g, b);
+    }
+
+    private static int[][] getRGBs(BufferedImage image) {
+        int w = image.getWidth();
+        int h = image.getHeight();
+        int[] data = new int[w * h];
+        image.getRGB(0, 0, w, h, data, 0, w);
+        int[][] colors = new int[3][w * h];
+        for(int i = 0; i < w * h; i++) {
+            colors[0][i] = data[i] & 0xFF;
+            colors[1][i] = (data[i] >> 8) & 0xFF;
+            colors[2][i] = (data[i] >> 16) & 0xFF;
+        }
+        return colors;
+    }
+
     private static byte[] getPixelBytes(BufferedImage image) {
         return ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
     }
@@ -155,7 +226,37 @@ public class MedianPixel {
     public static void main(String[] args) throws IOException {
         BufferedImage flower = ImageIO.read(new File("test flower.jpg"));
         BufferedImage chichen = ImageIO.read(new File("Chichen_Itza_Raymond_Ostertag.JPG"));
+
+//        SwingUtilities.invokeLater(() -> gui(flower));
+
         timeDifferentSortingAlgorithms(flower, chichen);
+    }
+
+    private static void gui(BufferedImage image) {
+        JFrame frame = new JFrame();
+        JPanel panel = new JPanel(null);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+        frame.setContentPane(panel);
+
+        JLabel averageColorLabel = new JLabel("Average Color:");
+        panel.add(averageColorLabel);
+
+        JPanel averageColorSquare = new JPanel();
+        averageColorSquare.setPreferredSize(new Dimension(50, 50));
+        averageColorSquare.setBackground(MedianPixel.getAverageColor(image));
+        panel.add(averageColorSquare);
+
+        JLabel medianColorLabel = new JLabel("Median Color:");
+        panel.add(medianColorLabel);
+
+        JPanel medianColorSquare = new JPanel();
+        medianColorSquare.setPreferredSize(new Dimension(50, 50));
+        medianColorSquare.setBackground(MedianPixel.getMedianColor(image));
+        panel.add(medianColorSquare);
+
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
     }
 
     public static void timeDifferentSortingAlgorithms(Image... testImages) {
@@ -176,7 +277,7 @@ public class MedianPixel {
         testSorting(testImage, MedianPixel::radixSort,          "Radix Sort");
     }
 
-    private static void testSorting(Image image, ByteSorter sorter, String name) {
+    private static void testSorting(Image image, IntSorter sorter, String name) {
         final Color[] col = new Color[1];
         final long millis = Time.millis(() -> col[0] = getMedianColor(image, sorter));
         System.out.println("=========================================");
@@ -186,7 +287,7 @@ public class MedianPixel {
         System.out.println("=========================================");
     }
 
-    private static void testSorting(Image[] image, ByteSorter sorter, String name) {
+    private static void testSorting(Image[] image, IntSorter sorter, String name) {
         final Color[] col = new Color[1];
         final long millis = Time.millis(() -> col[0] = getMedianColor(image, sorter));
         System.out.println("=========================================");
@@ -204,6 +305,21 @@ public class MedianPixel {
         }
 
         byte[][] ret = new byte[numSplitInto][n / numSplitInto];
+
+        for(int i = 0; i < n; i++) {
+            ret[i % numSplitInto][i / numSplitInto] = array[i];
+        }
+
+        return ret;
+    }
+    private static int[][] zipperSplit(int[] array, int numSplitInto) {
+        int n = array.length;
+
+        if(n % numSplitInto != 0) {
+            throw new IllegalArgumentException("Array length (%d) not a multiple of number of split arrays (%d)!".formatted(n, numSplitInto));
+        }
+
+        int[][] ret = new int[numSplitInto][n / numSplitInto];
 
         for(int i = 0; i < n; i++) {
             ret[i % numSplitInto][i / numSplitInto] = array[i];
@@ -244,16 +360,16 @@ public class MedianPixel {
     // ===========================
 
     // Array A[] has the items to sort; array B[] is a work array.
-    public static void topDownMergeSort(byte[] A) {
+    public static void topDownMergeSort(int[] A) {
         int n = A.length;
-        byte[] B = new byte[n];
+        int[] B = new int[n];
         System.arraycopy(A, 0, B, 0, n); // one time copy of A[] to B[]
         topDownSplitMerge(A, 0, n, B);           // sort data from B[] into A[]
     }
 
     // Split A[] into 2 runs, sort both runs into B[], merge both runs from B[] to A[]
     // iBegin is inclusive; iEnd is exclusive (A[iEnd] is not in the set).
-    private static void topDownSplitMerge(byte[] B, int iBegin, int iEnd, byte[] A) {
+    private static void topDownSplitMerge(int[] B, int iBegin, int iEnd, int[] A) {
         if (iEnd - iBegin <= 1)                     // if run size == 1
             return;                                 //   consider it sorted
         // split the run longer than 1 item into halves
@@ -268,7 +384,7 @@ public class MedianPixel {
     //  Left source half is A[ iBegin:iMiddle-1].
     // Right source half is A[iMiddle:iEnd-1   ].
     // Result is            B[ iBegin:iEnd-1   ].
-    private static void topDownMerge(byte[] B, int iBegin, int iMiddle, int iEnd, byte[] A)  {
+    private static void topDownMerge(int[] B, int iBegin, int iMiddle, int iEnd, int[] A)  {
         int i = iBegin, j = iMiddle;
 
         // While there are elements in the left or right runs...
@@ -285,25 +401,25 @@ public class MedianPixel {
     }
 
     // A utility function to get maximum value in arr[]
-    private static int getMax(byte arr[], int n) {
+    private static int getMax(int[] arr, int n) {
         int mx = arr[0];
         for (int i = 1; i < n; i++)
-            if (Byte.toUnsignedInt(arr[i]) > mx)
-                mx = Byte.toUnsignedInt(arr[i]);
+            if (arr[i] > mx)
+                mx = arr[i];
         return mx;
     }
 
     // A function to do counting sort of arr[] according to
     // the digit represented by exp.
-    private static void countSort(byte[] arr, int n, int exp) {
-        byte output[] = new byte[n]; // output array
+    private static void countSort(int[] arr, int n, int exp) {
+        int[] output = new int[n]; // output array
         int i;
-        int count[] = new int[10];
+        int[] count = new int[10];
         Arrays.fill(count, 0);
 
         // Store count of occurrences in count[]
         for (i = 0; i < n; i++)
-            count[ (Byte.toUnsignedInt(arr[i])/exp) % 10 ]++;
+            count[ (arr[i]/exp) % 10 ]++;
 
         // Change count[i] so that count[i] now contains
         // actual position of this digit in output[]
@@ -313,8 +429,8 @@ public class MedianPixel {
         // Build the output array
         for (i = n - 1; i >= 0; i--)
         {
-            output[count[ (Byte.toUnsignedInt(arr[i])/exp)%10 ] - 1] = arr[i];
-            count[ (Byte.toUnsignedInt(arr[i])/exp)%10 ]--;
+            output[count[ (arr[i]/exp)%10 ] - 1] = arr[i];
+            count[ (arr[i]/exp)%10 ]--;
         }
 
         // Copy the output array to arr[], so that arr[] now
@@ -325,7 +441,7 @@ public class MedianPixel {
 
     // The main function to that sorts arr[] of size n using
     // Radix Sort
-    public static void radixSort(byte[] arr) {
+    public static void radixSort(int[] arr) {
         int n = arr.length;
         // Find the maximum number to know number of digits
         int m = getMax(arr, n);

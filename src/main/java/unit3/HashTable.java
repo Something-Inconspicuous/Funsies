@@ -11,8 +11,8 @@ import java.util.TreeSet;
  */
 public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key, Value>> {
     public static class Entry<_Key, _Value> {
-        private _Key key;
-        private _Value value;
+        private final _Key key;
+        private final _Value value;
 
         public Entry(_Key k, _Value v) {
             super();
@@ -47,6 +47,7 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
             if(this.size() == 1) return getFirst();
 
             Entry<_Key, _Value> maybe = this.ceiling(new Entry<>(element, null));
+            if(maybe == null) return null;
             if(Objects.equals(maybe.getKey(), element)) {
                 return maybe;
             }
@@ -86,7 +87,7 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
             bucket = data[i];
         }
 
-        Entry<Key, Value> entry = new Entry<Key, Value>(key, value);
+        Entry<Key, Value> entry = new Entry<>(key, value);
         if(bucket.add(entry)) {
             size++;
             return true;
@@ -120,6 +121,7 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
         Bucket<Key, Value>[] oldData = data;
         makeData(data.length << 1);
         for(Bucket<Key, Value> bucket : oldData) {
+            if(bucket == null) continue;
             for (Entry<Key, Value> e : bucket) {
                 int i = index(e);
                 if(data[i] == null) {
@@ -228,9 +230,7 @@ public class HashTable<Key, Value> implements Iterable<unit3.HashTable.Entry<Key
         if(bucket == null) return false;
 
         Entry<Key, Value> maybe = bucket.find(key);
-        if(maybe == null) return false;
-
-        return true;
+        return maybe != null;
     }
 
     public boolean containsValue(Value value) {
