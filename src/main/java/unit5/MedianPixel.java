@@ -7,9 +7,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.awt.image.ImageObserver;
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 
 public class MedianPixel {
@@ -29,6 +29,7 @@ public class MedianPixel {
      * @return The converted BufferedImage
      */
     public static BufferedImage toBufferedImage(Image img) {
+        if(img == null) throw new NullPointerException("Image cannot be null");
         if (img instanceof BufferedImage) {
             return (BufferedImage) img;
         }
@@ -94,12 +95,12 @@ public class MedianPixel {
         return getMedianColorFromBuffered(toBufferedImage(image), sorter);
     }
 
-    public static Color getMedianColor(Image[] images, IntSorter sorter) {
+    public static Color[] getMedianColors(Image[] images, IntSorter sorter) {
         BufferedImage[] bimages = new BufferedImage[images.length];
         for(int i = 0; i < images.length; i++) {
             bimages[i] = toBufferedImage(images[i]);
         }
-        return getMedianColorFromBuffered(bimages, sorter);
+        return getMedianColorsFromBuffered(bimages, sorter);
     }
 
     private static Color getMedianColorFromBuffered(BufferedImage image, ByteSorter sorter) {
@@ -166,7 +167,7 @@ public class MedianPixel {
 
     }
 
-    private static Color getMedianColorFromBuffered(BufferedImage[] images, IntSorter sorter) {
+    private static Color[] getMedianColorsFromBuffered(BufferedImage[] images, IntSorter sorter) {
         int[] rs = new int[images.length];
         int[] gs = new int[images.length];
         int[] bs = new int[images.length];
@@ -181,15 +182,13 @@ public class MedianPixel {
             bs[i] = streams[2][streams[2].length / 2];
         }
 
-        sorter.sort(rs);
-        sorter.sort(gs);
-        sorter.sort(bs);
+        Color[] colors = new Color[images.length];
 
-        int r = rs[rs.length / 2];
-        int g = gs[gs.length / 2];
-        int b = bs[bs.length / 2];
+        for(int i = 0; i < images.length; i++) {
+            colors[i] = new Color(rs[i], gs[i], bs[i]);
+        }
 
-        return new Color(r, g, b);
+        return colors;
     }
 
     private static Color getMedianColorFromBuffered(BufferedImage image, IntSorter sorter) {
@@ -223,13 +222,24 @@ public class MedianPixel {
         return ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
     }
 
-    public static void main(String[] args) throws IOException {
-        BufferedImage flower = ImageIO.read(new File("test flower.jpg"));
-        BufferedImage chichen = ImageIO.read(new File("Chichen_Itza_Raymond_Ostertag.JPG"));
+    public static void main(String[] args) throws IOException, URISyntaxException {
+//        BufferedImage flower = ImageIO.read(new File("test flower.jpg"));
+//        BufferedImage chichen = ImageIO.read(new File("Chichen_Itza_Raymond_Ostertag.JPG"));
+        BufferedImage vanGogh = ImageIO.read(new URI("https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1513px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg").toURL());
+        BufferedImage wood = ImageIO.read(new URI("https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Grant_Wood_-_American_Gothic_-_Google_Art_Project.jpg/994px-Grant_Wood_-_American_Gothic_-_Google_Art_Project.jpg").toURL());
+        BufferedImage hopper = ImageIO.read(new URI("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Nighthawks_by_Edward_Hopper_1942.jpg/1600px-Nighthawks_by_Edward_Hopper_1942.jpg").toURL());
+        BufferedImage daVinci = ImageIO.read(new URI("https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/The_Last_Supper_-_Leonardo_Da_Vinci_-_High_Resolution_32x16.jpg/880px-The_Last_Supper_-_Leonardo_Da_Vinci_-_High_Resolution_32x16.jpg").toURL());
 
+        int pxs = vanGogh.getWidth() * vanGogh.getHeight()
+                + wood.getWidth() * wood.getHeight()
+                + hopper.getWidth() * hopper.getHeight()
+                + daVinci.getHeight() * daVinci.getHeight()
+                ;
+
+        System.out.println("Number of pixels = " + pxs);
 //        SwingUtilities.invokeLater(() -> gui(flower));
 
-        timeDifferentSortingAlgorithms(flower, chichen);
+        timeDifferentSortingAlgorithms(vanGogh, wood, hopper, daVinci);
     }
 
     private static void gui(BufferedImage image) {
@@ -287,14 +297,25 @@ public class MedianPixel {
         System.out.println("=========================================");
     }
 
+    static Color[] col;
     private static void testSorting(Image[] image, IntSorter sorter, String name) {
-        final Color[] col = new Color[1];
-        final long millis = Time.millis(() -> col[0] = getMedianColor(image, sorter));
+        final long millis = Time.millis(() -> col = getMedianColors(image, sorter));
         System.out.println("=========================================");
         System.out.println("Sorting Algorithm: " + name);
         System.out.println("Time: " + millis + "ms");
-        System.out.println("Color: " + col[0]);
+        System.out.println("Colors: " + toHex(col));
         System.out.println("=========================================");
+    }
+
+    private static String toHex(Color[] colors) {
+        if(colors.length == 0) return "[]";
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < colors.length - 1; i++) {
+            sb.append("#").append(Integer.toHexString(colors[i].getRGB() & 0xFFFFFF).toUpperCase()).append(", ");
+        }
+        sb.append("#").append(Integer.toHexString(colors[colors.length - 1].getRGB() & 0xFFFFFF).toUpperCase()).append("]");
+        return sb.toString();
+
     }
 
     private static byte[][] zipperSplit(byte[] array, int numSplitInto) {
