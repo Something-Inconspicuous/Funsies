@@ -69,6 +69,23 @@ public class Zombie {
 
     public static void main(String[] args) {
         final int numTrials = 1000;
+        // pay no mind to the spaghetti behind the method
+        simulateTrials(numTrials, true);
+        // simulateTrials(numTrials, false);
+        // simulateTrials(numTrials, false);
+        // simulateTrials(numTrials, false);
+        // simulateTrials(numTrials, false);
+    }
+
+    private static void simulateTrials(final int numTrials, boolean doLog) {
+        if(doLog)
+            simulateTrialsDoLog(numTrials);
+        else 
+            simulateTrialsNoLog(numTrials);
+    }
+
+    private static void simulateTrialsNoLog(final int numTrials) {
+        int[] data = new int[numTrials];
         int sum = 0;
         for(int i = 0; i < numTrials; i++) {
             System.out.println("=======================================================");
@@ -76,9 +93,22 @@ public class Zombie {
             int[] n = getNumDoctors(7);
             System.out.format("\tDoctors: %d\n\tMax Wait: %d\n\tZombies: %d\n", n[0], n[1], n[2]);
             sum += n[0];
+            data[i] = n[0];
+            maxDoctorsNeeded = Math.max(maxDoctorsNeeded, n[0]);
         }
+        double mean = (double) sum / numTrials;
+
+        double variance = 0;
+        for(int i = 0; i < numTrials; i++) {
+            double diff = data[i] - mean;
+            variance += diff * diff;
+        }
+        variance /= numTrials - 1;
+
         System.out.println("=======================================================");
-        System.out.println("Average doctors needed: " + (double) sum / numTrials);
+        System.out.println("Average doctors needed: " + mean);
+        System.out.println("\tStandard Deviation: " + Math.sqrt(variance));
+        System.out.println("Maximum doctors needed: " + maxDoctorsNeeded);
     }
 
     private static int[] getNumDoctors(int numDaysTolerence) {
@@ -124,7 +154,9 @@ public class Zombie {
                     ++numNewZombies;
                 }
 
-                if(zombie.getHealth() < 30 && numDoctors >= 0) {
+                if(zombie.isDead()) {
+                    it.remove();
+                } else if(zombie.getHealth() < 30 && numDoctors >= 0) {
                     // holy something this is some spaghetti 
                     boolean canBeTreated = true;
                     if(zombie.getNumDaysTreated() == 0){
@@ -152,10 +184,6 @@ public class Zombie {
                             zombie.heal();
                         }
                     }
-                }
-
-                if(zombie.isDead()) {
-                    it.remove();
                 }
             }
 
