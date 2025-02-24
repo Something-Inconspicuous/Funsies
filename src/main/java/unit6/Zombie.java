@@ -87,6 +87,33 @@ public class Zombie {
     private static void simulateTrialsNoLog(final int numTrials) {
         int[] data = new int[numTrials];
         int sum = 0;
+        int maxDoctorsNeeded = -1;
+        for(int i = 0; i < numTrials; i++) {
+            int[] n = getNumDoctors(7);
+            sum += n[0];
+            data[i] = n[0];
+            maxDoctorsNeeded = Math.max(maxDoctorsNeeded, n[0]);
+        }
+        double mean = (double) sum / numTrials;
+
+        double variance = 0;
+        for(int i = 0; i < numTrials; i++) {
+            double diff = data[i] - mean;
+            variance += diff * diff;
+        }
+        variance /= numTrials - 1;
+
+        System.out.println("=======================================================");
+        System.out.println("Average doctors needed: " + mean);
+        System.out.println("\tStandard Deviation: " + Math.sqrt(variance));
+        System.out.println("Maximum doctors needed: " + maxDoctorsNeeded);
+    }
+
+
+    private static void simulateTrialsDoLog(final int numTrials) {
+        int[] data = new int[numTrials];
+        int sum = 0;
+        int maxDoctorsNeeded = 0;
         for(int i = 0; i < numTrials; i++) {
             System.out.println("=======================================================");
             System.out.println("Trial " + i);
